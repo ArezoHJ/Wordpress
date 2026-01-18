@@ -1,0 +1,53 @@
+services:
+  db:
+    # Använd följande rad om ni arbetar med Mac med Silicon-chip (M1/M2) och har kompatibilitetsproblem
+    platform: linux/arm64
+    # För x86-system, som äldre datorer eller icke-Mac, behåll den här raden
+    #platform: linux/x86_64
+    # Vilken version av mysql ska jag använda?
+    # mysql:5.7 är en äldre version, men används ofta för kompatibilitet med äldre WordPress-plugin <- egentligen inget vi behöver tänka på nu.
+    # image: mysql:5.7
+    # Alternativt, använd senaste versionen för framtidssäkerhet, men det kan orsaka kompatibilitetsproblem <- en uppdatering kan göra att något kraschar.
+    # image: mysql:latest
+    # För moderna system (t.ex. Mac med M1, M2), använd mysql:8.0 för bästa kompatibilitet med nyare hårdvara och senaste versionen av WordPress 
+    # Med ett statiskt versionsnummer får vi alltid samma version.
+    image: mysql:8.0
+    container_name: wordpress_db_new
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpresspassword
+
+  wordpress:
+    image: wordpress:latest
+    depends_on:
+      - db
+    ports:
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpresspassword
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - ./wordpress:/var/www/html
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    platform: linux/amd64
+    depends_on:
+      - db
+    ports:
+      - "8080:80" # Porten du använder för att komma åt phpMyAdmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: rootpassword # Lösenordet för root-användaren i MySQL
+
+volumes:
+  db_data:
